@@ -1,0 +1,24 @@
+{
+  "dependencies": {
+    "express": "^5.1.0",
+    "systeminformation": "^5.27.0"
+  },
+  "name": "monitoring-system-js",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tamzid68/Monitoring-System-JS.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tamzid68/Monitoring-System-JS/issues"
+  },
+  "homepage": "https://github.com/tamzid68/Monitoring-System-JS#readme",
+  "description": ""
+}

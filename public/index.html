@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>System Monitor Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <h3>System Monitor Dashboard</h3>
+    <div>
+        <strong>CPU Load:</strong> <span id="cpuLoad">--%</span><br>
+        <strong>RAM Usage:</strong> <span id="ramUsage">--%</span><br>
+        <strong>GPU:</strong> <span id="gpuName">--</span><br>
+        <strong>Total Processes:</strong> <span id="processCount">--</span>
+    </div>
+    <canvas id="cpuChart" width="400" height="150"></canvas>
+    <canvas id="ramChart" width="400" height="150"></canvas>
+
+    <script>
+        const cpuCtx = document.getElementById('cpuChart').getContext('2d');
+        const ramCtx = document.getElementById('ramChart').getContext('2d');
+
+        const cpuChart = new Chart(cpuCtx, {
+            type: 'line',
+            data: { labels: [], datasets: [{ label: 'CPU %', data: [], borderColor: 'blue' }] },
+            options: { scales: { y: { min: 0, max: 100 } } }
+        });
+
+        const ramChart = new Chart(ramCtx, {
+            type: 'line',
+            data: { labels: [], datasets: [{ label: 'RAM %', data: [], borderColor: 'green' }] },
+            options: { scales: { y: { min: 0, max: 100 } } }
+        });
+
+        async function fetchData() {
+            const res = await fetch('/api/stats');
+            const data = await res.json();
+
+            console.log(data);
+
+            const time = new Date().toLocaleTimeString();
+
+            document.getElementById('cpuLoad').textContent = data.cpuLoad + '%';
+            document.getElementById('ramUsage').textContent = data.memory.percentUsed + '%';
+            document.getElementById('gpuName').textContent = data.gpu.vendor + ' ' + data.gpu.model;
+            document.getElementById('processCount').textContent = data.processCount;
+
+            cpuChart.data.labels.push(time);
+            cpuChart.data.datasets[0].data.push(data.cpuLoad);
+            ramChart.data.labels.push(time);
+            ramChart.data.datasets[0].data.push(data.memory.percentUsed);
+
+            if (cpuChart.data.labels.length > 20) {
+                cpuChart.data.labels.shift();
+                cpuChart.data.datasets[0].data.shift();
+                ramChart.data.labels.shift();
+                ramChart.data.datasets[0].data.shift();
+            }
+
+            cpuChart.update();
+            ramChart.update();
+        }
+
+        setInterval(() => {
+            console.log("Fetching...");
+            fetchData();
+        }, 2000);
+    </script>
+</body>
+
+</html>
