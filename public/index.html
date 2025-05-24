@@ -28,20 +28,21 @@
 
     .chart-container {
       display: flex;
-      gap: 32px;
+      gap: 60px;
       flex-wrap: wrap;
       justify-content: center;
       align-items: flex-start;
-      margin-bottom: 30px;
+      margin-bottom: 40px;
     }
 
     canvas {
       background: #222;
-      border-radius: 12px;
-      width: 560px !important;
-      height: 560px !important;
+      border-radius: 32px;
+      width: 600px !important;
+      height: 480px !important;
       box-sizing: border-box;
       display: block;
+      margin: 0 30px;
     }
 
     #metrics-info {
@@ -137,12 +138,14 @@
       gpuChart.update();
 
       document.getElementById('metrics-info').innerHTML = `
-        <b>Time:</b> ${data.time}<br>
-        <b>CPU Load:</b> ${data.cpuLoadPercent}%<br>
-        <b>Total Memory:</b> ${data.totalMemGB} GB<br>
-        <b>Used Memory:</b> ${data.usedMemGB} GB (${data.memUsagePercent}%)<br>
-        <b>GPU:</b> ${data.gpuName}<br>
-        <b>GPU Usage:</b> ${data.gpuUsagePercent}%
+        <div style="line-height:1.7;">
+          <span style="font-weight:bold;color:#0f0;">Time:</span> <span>${data.time}</span><br>
+          <span style="font-weight:bold;">CPU Load:</span> <span style="color:${data.cpuLoadPercent > 80 ? '#f00' : '#0f0'}">${data.cpuLoadPercent}%</span><br>
+          <span style="font-weight:bold;">Total Memory:</span> <span>${data.totalMemGB} GB</span><br>
+          <span style="font-weight:bold;">Used Memory:</span> <span>${data.usedMemGB} GB</span> <span style="color:${data.memUsagePercent > 80 ? '#f00' : '#0f0'}">(${data.memUsagePercent}%)</span><br>
+          <span style="font-weight:bold;">GPU:</span> <span>${data.gpuName}</span><br>
+          <span style="font-weight:bold;">GPU Usage:</span> <span style="color:${data.gpuUsagePercent > 80 ? '#f00' : '#0f0'}">${data.gpuUsagePercent}%</span>
+        </div>
       `;
     }
 
