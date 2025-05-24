@@ -1,73 +1,153 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <title>System Monitor Dashboard</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8" />
+  <title>System Monitor Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background-color: #111;
+      color: #fff;
+      font-family: sans-serif;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #0f0;
+      margin-bottom: 30px;
+      font-size: 2em;
+      text-align: center;
+    }
+
+    .dashboard-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .chart-container {
+      display: flex;
+      gap: 32px;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: flex-start;
+      margin-bottom: 30px;
+    }
+
+    canvas {
+      background: #222;
+      border-radius: 12px;
+      width: 560px !important;
+      height: 560px !important;
+      box-sizing: border-box;
+      display: block;
+    }
+
+    #metrics-info {
+      margin-top: 20px;
+      font-size: 1.1em;
+      background: #181818;
+      border-radius: 10px;
+      padding: 18px 28px;
+      min-width: 300px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  </style>
 </head>
-
 <body>
-    <h3>System Monitor Dashboard</h3>
-    <div>
-        <strong>CPU Load:</strong> <span id="cpuLoad">--%</span><br>
-        <strong>RAM Usage:</strong> <span id="ramUsage">--%</span><br>
-        <strong>GPU:</strong> <span id="gpuName">--</span><br>
-        <strong>Total Processes:</strong> <span id="processCount">--</span>
+  <h1>System Monitor Dashboard</h1>
+  <div class="dashboard-wrapper">
+    <div class="chart-container">
+      <canvas id="cpuChart"></canvas>
+      <canvas id="ramChart"></canvas>
+      <canvas id="gpuChart"></canvas>
     </div>
-    <canvas id="cpuChart" width="400" height="150"></canvas>
-    <canvas id="ramChart" width="400" height="150"></canvas>
+    <div id="metrics-info"></div>
+  </div>
+  <script>
+    const cpuCtx = document.getElementById('cpuChart').getContext('2d');
+    const ramCtx = document.getElementById('ramChart').getContext('2d');
+    const gpuCtx = document.getElementById('gpuChart').getContext('2d');
 
-    <script>
-        const cpuCtx = document.getElementById('cpuChart').getContext('2d');
-        const ramCtx = document.getElementById('ramChart').getContext('2d');
+    const cpuChart = new Chart(cpuCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Used', 'Idle'],
+        datasets: [{
+          data: [0, 100],
+          backgroundColor: ['#f00', '#333'],
+        }]
+      },
+      options: { 
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } }
+      }
+    });
 
-        const cpuChart = new Chart(cpuCtx, {
-            type: 'line',
-            data: { labels: [], datasets: [{ label: 'CPU %', data: [], borderColor: 'blue' }] },
-            options: { scales: { y: { min: 0, max: 100 } } }
-        });
+    const ramChart = new Chart(ramCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Used RAM'],
+        datasets: [{
+          label: '% RAM Used',
+          data: [0],
+          backgroundColor: '#09f'
+        }]
+      },
+      options: { 
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, max: 100 } }
+      }
+    });
 
-        const ramChart = new Chart(ramCtx, {
-            type: 'line',
-            data: { labels: [], datasets: [{ label: 'RAM %', data: [], borderColor: 'green' }] },
-            options: { scales: { y: { min: 0, max: 100 } } }
-        });
+    const gpuChart = new Chart(gpuCtx, {
+      type: 'bar',
+      data: {
+        labels: ['GPU Usage'],
+        datasets: [{
+          label: '% Used',
+          data: [0],
+          backgroundColor: '#f90'
+        }]
+      },
+      options: { 
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, max: 100 } }
+      }
+    });
 
-        async function fetchData() {
-            const res = await fetch('/api/stats');
-            const data = await res.json();
+    async function updateCharts() {
+      const res = await fetch('/metrics');
+      const data = await res.json();
 
-            console.log(data);
+      cpuChart.data.datasets[0].data = [data.cpuLoadPercent, 100 - data.cpuLoadPercent];
+      ramChart.data.datasets[0].data = [data.memUsagePercent];
+      gpuChart.data.datasets[0].data = [data.gpuUsagePercent];
 
-            const time = new Date().toLocaleTimeString();
+      cpuChart.update();
+      ramChart.update();
+      gpuChart.update();
 
-            document.getElementById('cpuLoad').textContent = data.cpuLoad + '%';
-            document.getElementById('ramUsage').textContent = data.memory.percentUsed + '%';
-            document.getElementById('gpuName').textContent = data.gpu.vendor + ' ' + data.gpu.model;
-            document.getElementById('processCount').textContent = data.processCount;
+      document.getElementById('metrics-info').innerHTML = `
+        <b>Time:</b> ${data.time}<br>
+        <b>CPU Load:</b> ${data.cpuLoadPercent}%<br>
+        <b>Total Memory:</b> ${data.totalMemGB} GB<br>
+        <b>Used Memory:</b> ${data.usedMemGB} GB (${data.memUsagePercent}%)<br>
+        <b>GPU:</b> ${data.gpuName}<br>
+        <b>GPU Usage:</b> ${data.gpuUsagePercent}%
+      `;
+    }
 
-            cpuChart.data.labels.push(time);
-            cpuChart.data.datasets[0].data.push(data.cpuLoad);
-            ramChart.data.labels.push(time);
-            ramChart.data.datasets[0].data.push(data.memory.percentUsed);
-
-            if (cpuChart.data.labels.length > 20) {
-                cpuChart.data.labels.shift();
-                cpuChart.data.datasets[0].data.shift();
-                ramChart.data.labels.shift();
-                ramChart.data.datasets[0].data.shift();
-            }
-
-            cpuChart.update();
-            ramChart.update();
-        }
-
-        setInterval(() => {
-            console.log("Fetching...");
-            fetchData();
-        }, 2000);
-    </script>
+    setInterval(updateCharts, 5000);
+    updateCharts();
+  </script>
 </body>
-
 </html>
